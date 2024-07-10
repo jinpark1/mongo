@@ -18,7 +18,7 @@ export async function setupDatabase() {
     return {
       client,
       db,
-      users: db.collections("users"),
+      users: db.collection("users"),
       movies: db.collection("movies"),
     };
   } catch (error) {

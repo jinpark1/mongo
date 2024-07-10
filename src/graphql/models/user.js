@@ -1,47 +1,64 @@
+import { ObjectId } from "mongodb";
 export const typeDef = /* GraphQL */ `
   type Query {
-    user: User
+    users: [User!]!
+    user(id: ID!): User
   }
 
   type Mutation {
     createUser(user: newUserInput!): User
+    deleteUser(id: ID!): Boolean
+    updateUser(id: ID!, update: updateUserInput): User
   }
 
   input newUserInput {
     name: String!
-    age: Int!
+    email: String!
+  }
+
+  input updateUserInput {
+    name: String!
   }
 
   type User {
-    id: Int
+    id: ID!
     name: String
-    age: Int
+    email: String
   }
 `;
 
 export const resolvers = {
   Query: {
-    user: () => {
-      return {
-        id: 1,
-        name: "Jin",
-        age: 19,
-      };
+    users: (obj, args, { mongo }) => {
+      return mongo.users.find().limit(5).toArray();
+    },
+    user: (obj, { id }, { mongo }) => {
+      console.log(id);
+      return mongo.users.findOne({ _id: new ObjectId(String(id)) });
     },
   },
 
   Mutation: {
     createUser: async (_, { user }, { mongo }) => {
-      const movies = await mongo.movies.find().toArray();
-      console.log(movies);
+      const response = await mongo.users.insertOne(user);
       return {
-        id: 1,
+        id: response.insertedId,
         ...user,
       };
+    },
+    deleteUser: async (obj, args, { mongo }) => {
+      await mongo.users.deleteOne({ _id: new ObjectId(String(args.id)) });
+      return true;
+    },
+    updateUser: async (obj, { id, update }, { mongo }) => {
+      const response = await mongo.users.updateOne({ _id: new ObjectId(String(id)) }, { $set: { name: update.name } });
+      console.log(response);
+      return mongo.users.findOne({ _id: new ObjectId(String(id)) });
     },
   },
 
   User: {
+    id: ({ id, _id }) => _id || id,
     name: (obj) => {
       return obj.name.trim().toUpperCase();
     },

@@ -20,6 +20,7 @@ export async function setupDatabase() {
       db,
       users: db.collection("users"),
       movies: db.collection("movies"),
+      comments: db.collection("comments"),
     };
   } catch (error) {
     console.log("Error connection to the database: ", error);
